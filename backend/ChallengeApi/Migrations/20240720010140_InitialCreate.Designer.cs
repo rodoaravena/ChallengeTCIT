@@ -10,7 +10,7 @@ using PostManager.Models;
 namespace ChallengeApi.Migrations
 {
     [DbContext(typeof(PostDb))]
-    [Migration("20240719181200_InitialCreate")]
+    [Migration("20240720010140_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
