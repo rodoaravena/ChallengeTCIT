@@ -54,40 +54,30 @@ export class AppComponent {
     this.filtro = new FormControl('');
     this.sourcePosts = new MatTableDataSource();
     this.addPostDialog = {} as TemplateRef<any>;
-
-    this.sourcePosts.filterPredicate = (data: any[], filter: string) => {
-      console.log(filter);
-      return data.includes(filter);
-    };
-
     this.getPosts();
   }
 
   searchPost(): void {
-    let filterValue = this.filtro.value;
-    console.log(filterValue);
-    filterValue = filterValue.trim().toLowerCase();
+    let filterValue = this.filtro.value.trim().toLowerCase();
     this.sourcePosts.filter = filterValue;
   }
 
   async getPosts() {
-    const result = await fetch('http://localhost:5047/posts');
+    await fetch('http://localhost:5047/posts').then(async result=>{
+      console.log(result)
+      if (result.status==200){
+        this.sourcePosts.data = (await result.json()) as any[];
+      }
 
-    this.sourcePosts = (await result.json()) as MatTableDataSource<any[]>;
+    }).catch(()=>{
+        Swal.fire('Error', 'Ha ocurrido un error al recuperar los post.<br>Inténtelo de nuevo más tarde', 'error');
+    });
+
+
   }
 
   showAddPostForm() {
-    const dialogForm = this.dialog.open(this.addPostDialog);
-    dialogForm.afterClosed().subscribe((result) => {
-      if (result !== undefined) {
-        if (result !== 'no') {
-          const enabled = 'Y';
-          console.log(result);
-        } else if (result === 'no') {
-          console.log('User clicked no.');
-        }
-      }
-    });
+    this.dialog.open(this.addPostDialog);
   }
 
   async saveFormAddPost() {
@@ -123,22 +113,28 @@ export class AppComponent {
   }
 
   async addPost(formData: any): Promise<boolean> {
-    const result = await fetch('http://localhost:5047/posts', {
+    let saved = false;
+
+    await fetch('http://localhost:5047/posts', {
       method: 'POST',
       headers: {
-        Accept: 'application/json',
+        'Accept': 'application/json',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         name: formData.pub.value,
         description: formData.desc.value,
       }),
+    }).then(result =>{
+      if (result.status == 201) {
+        saved = true;
+      }
+    }).catch(()=>{
+      saved = false;
     });
 
-    if (result.status == 201) {
-      return true;
-    }
-    return false;
+
+    return saved;
   }
 
   warningDeletePost(datos: any) {
@@ -175,9 +171,15 @@ export class AppComponent {
   }
 
   async deletePost(postId: number): Promise<number> {
-    const result = await fetch(`http://localhost:5047/post/${postId}`, {
+    let status = 0;
+
+    await fetch(`http://localhost:5047/post/${postId}`, {
       method: 'DELETE',
+    }).then(result =>{
+      status = result.status
+    }).catch(()=>{
+      status=0;
     });
-    return result.status;
+    return status;
   }
 }
