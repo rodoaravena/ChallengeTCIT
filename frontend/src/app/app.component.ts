@@ -63,17 +63,10 @@ export class AppComponent {
   }
 
   async getPosts() {
-    Swal.fire({
-      title: 'Obteniendo datos...',
-      didOpen: () => {
-        Swal.showLoading();
-      },
-    });
     await fetch('http://localhost:5047/posts').then(async result=>{
       if (result.status==200){
         this.sourcePosts.data = (await result.json()) as any[];
       }
-      Swal.close();
 
     }).catch(()=>{
       Swal.close();
