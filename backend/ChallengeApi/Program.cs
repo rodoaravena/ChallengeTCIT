@@ -48,8 +48,6 @@ app.UseCors(MyAllowSpecificOrigins);
 
 app.MapGet("/posts", async (PostDb db) => await db.Posts.ToListAsync());
 
-app.MapGet("/posts/{id}", async (PostDb db, int id) => await db.Posts.FindAsync(id));
-
 app.MapPost("/posts", async (PostDb db, Post post) => {
     await db.Posts.AddAsync(post);
     await db.SaveChangesAsync();
