@@ -1,11 +1,22 @@
 import { Component, TemplateRef, ViewChild } from '@angular/core';
+import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { FormsModule, ReactiveFormsModule, FormControl, NgForm } from '@angular/forms';
-import { MatTableModule } from '@angular/material/table';
-import { MatDialog, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
+import {
+  FormsModule,
+  ReactiveFormsModule,
+  FormControl,
+  NgForm,
+  FormGroup,
+} from '@angular/forms';
+import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import {
+  MatDialog,
+  MatDialogRef,
+  MatDialogModule,
+} from '@angular/material/dialog';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -19,7 +30,8 @@ import Swal from 'sweetalert2';
     FormsModule,
     ReactiveFormsModule,
     MatTableModule,
-    MatDialogModule
+    MatDialogModule,
+    MatIconModule,
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
@@ -30,25 +42,38 @@ export class AppComponent {
   @ViewChild('addPostDialog') addPostDialog: TemplateRef<any>;
 
   filtro: FormControl;
-  publicaciones: any[];
+  formAddPost = new FormGroup({
+    pub: new FormControl(null),
+    desc: new FormControl(null),
+  });
+
+  sourcePosts: MatTableDataSource<any[]>;
   encabezados: string[] = ['name', 'description', 'options'];
 
   constructor(public dialog: MatDialog) {
     this.filtro = new FormControl('');
-    this.publicaciones = [];
+    this.sourcePosts = new MatTableDataSource();
     this.addPostDialog = {} as TemplateRef<any>;
+
+    this.sourcePosts.filterPredicate = (data: any[], filter: string) => {
+      console.log(filter);
+      return data.includes(filter);
+    };
 
     this.getPosts();
   }
 
-  buscar(): void {
-    console.log(this.filtro.value);
+  searchPost(): void {
+    let filterValue = this.filtro.value;
+    console.log(filterValue);
+    filterValue = filterValue.trim().toLowerCase();
+    this.sourcePosts.filter = filterValue;
   }
 
   async getPosts() {
     const result = await fetch('http://localhost:5047/posts');
 
-    this.publicaciones = (await result.json()) as any[];
+    this.sourcePosts = (await result.json()) as MatTableDataSource<any[]>;
   }
 
   showAddPostForm() {
@@ -65,9 +90,59 @@ export class AppComponent {
     });
   }
 
-  addPost() {}
+  async saveFormAddPost() {
+    let data = {} as any;
+    this.dialog.closeAll();
+    if (this.formAddPost.valid) {
+      data = this.formAddPost.controls;
+      Swal.fire({
+        title: `Guardando "${data.pub.value}"...`,
+        didOpen: () => {
+          Swal.showLoading();
+        },
+      });
+      const saved = await this.addPost(data);
+      Swal.close();
+      if (saved) {
+        Swal.fire(
+          '¡Guardado!',
+          `Se ha guardado "${data.pub.value}" correctamente`,
+          'success'
+        );
+      } else {
+        Swal.fire('¡Ups!', `No se pudo guardar "${data.pub.value}"`, 'error');
+      }
+    } else {
+      Swal.fire(
+        '¡Error!',
+        'El formulario tiene errores, verifique e intentelo de nuevo',
+        'error'
+      );
+    }
+    this.getPosts();
+  }
+
+  async addPost(formData: any): Promise<boolean> {
+    const result = await fetch('http://localhost:5047/posts', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name: formData.pub.value,
+        description: formData.desc.value,
+      }),
+    });
+
+    if (result.status == 201) {
+      return true;
+    }
+    return false;
+  }
 
   warningDeletePost(datos: any) {
+    let responseStatus = 0;
     Swal.fire({
       title: '¡Precaución!',
       text: `Está seguro que desea eliminar "${datos.name}"`,
@@ -77,12 +152,11 @@ export class AppComponent {
       showCancelButton: true,
       cancelButtonText: 'Cancelar',
       loaderHtml: '<mat-spinner></mat-spinner>',
-      preConfirm: () => {
+      preConfirm: async () => {
         Swal.showLoading();
+        responseStatus = await this.deletePost(datos.id);
       },
-    }).then(async (result) => {
-      const responseStatus = await this.deletePost(datos.id);
-
+    }).then((result) => {
       if (responseStatus == 200) {
         Swal.fire(
           'Eliminado',
@@ -92,7 +166,7 @@ export class AppComponent {
       } else {
         Swal.fire(
           '¡Ups!',
-          `Ha ocurrido un erroral intentar eliminar "${datos.name}"`,
+          `Ha ocurrido un error al intentar eliminar "${datos.name}"`,
           'error'
         );
       }
@@ -105,17 +179,5 @@ export class AppComponent {
       method: 'DELETE',
     });
     return result.status;
-  }
-
-  onSend(form: NgForm){
-    if(form.status === 'INVALID')
-    {
-      // display error in your form
-    }else{
-        console.log(form.value)
-        this.dialog.closeAll(); // Close opened diaglo
-      // do whatever you want to do with your data
-    }
-
   }
 }

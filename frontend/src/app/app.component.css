@@ -7,9 +7,14 @@ div.body{
 
 button {
   margin-left: 10px;
-
 }
 
-.end {
-  justify-content: flex-end;
+button.btn-end{
+  float:right;
 }
+
+.form-dialog{
+  width: 100%;
+}
+
+
