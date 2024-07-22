@@ -76,6 +76,7 @@ export class AppComponent {
       Swal.close();
 
     }).catch(()=>{
+      Swal.close();
         Swal.fire('Error', 'Ha ocurrido un error al recuperar los post.<br>Inténtelo de nuevo más tarde', 'error');
     });
 
