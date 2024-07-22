@@ -63,11 +63,17 @@ export class AppComponent {
   }
 
   async getPosts() {
+    Swal.fire({
+      title: 'Obteniendo datos...',
+      didOpen: () => {
+        Swal.showLoading();
+      },
+    });
     await fetch('http://localhost:5047/posts').then(async result=>{
-      console.log(result)
       if (result.status==200){
         this.sourcePosts.data = (await result.json()) as any[];
       }
+      Swal.close();
 
     }).catch(()=>{
         Swal.fire('Error', 'Ha ocurrido un error al recuperar los post.<br>Inténtelo de nuevo más tarde', 'error');
