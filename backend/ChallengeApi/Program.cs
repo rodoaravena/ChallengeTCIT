@@ -1,12 +1,13 @@
 using Microsoft.OpenApi.Models;
 using Microsoft.EntityFrameworkCore;
-using PostManager.Models;
+using ChallengeApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
-var connectionString = builder.Configuration.GetConnectionString("Posts") ?? "Data Source=Posts.db";
+var connectionString = builder.Configuration.GetConnectionString("postgresCS");
+
 builder.Services.AddEndpointsApiExplorer();
 
-builder.Services.AddSqlite<PostDb>(connectionString);
+builder.Services.AddNpgsql<PostDb>(connectionString);
 
 builder.Services.AddSwaggerGen(c =>
 {
@@ -39,6 +40,7 @@ if (app.Environment.IsDevelopment())
       c.SwaggerEndpoint("/swagger/v1/swagger.json", "Challenge API V1");
    });
 }
+
 
 // 3) use the capability
 app.UseCors(TCITAllowedCORS);

@@ -1,9 +1,12 @@
+using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 
-namespace PostManager.Models
+namespace ChallengeApi.Models
 {
+    
     public class Post
     {
+        [Key]
         public int Id { get; set; }
         public string? Name { get; set; }
         public string? Description { get; set; }
@@ -14,5 +17,6 @@ namespace PostManager.Models
     {
         public PostDb(DbContextOptions options) : base(options) { }
         public DbSet<Post> Posts { get; set; } = null!;
+        
     }
 }
