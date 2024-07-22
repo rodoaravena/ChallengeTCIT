@@ -1,7 +1,6 @@
 using Microsoft.OpenApi.Models;
 using Microsoft.EntityFrameworkCore;
 using PostManager.Models;
-using Microsoft.Net.Http.Headers;
 
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("Posts") ?? "Data Source=Posts.db";
@@ -14,20 +13,18 @@ builder.Services.AddSwaggerGen(c =>
      c.SwaggerDoc("v1", new OpenApiInfo { Title = "Challenge API", Description = "Manage Post", Version = "v1" });
 });
 
-// 1) define a unique string
-string MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
+// Configuración del CORS
+string TCITAllowedCORS = "_SpecificOrigins";
 
-// 2) define allowed domains, in this case "http://example.com" and "*" = all
-//    domains, for testing purposes only.
+
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy(name: MyAllowSpecificOrigins,
+    options.AddPolicy(name: TCITAllowedCORS,
       policy =>
       {
-          policy.WithOrigins("http://localhost:4200")
-          .AllowAnyMethod()
+          policy.WithOrigins("http://localhost:4200")// Se establece desde donde se recibirán las peticiones
+          .WithMethods("GET","POST", "DELETE") // Se establece los metodos permitidos
           .AllowAnyHeader();
-
       });
    
 });
@@ -44,7 +41,7 @@ if (app.Environment.IsDevelopment())
 }
 
 // 3) use the capability
-app.UseCors(MyAllowSpecificOrigins);
+app.UseCors(TCITAllowedCORS);
 
 app.MapGet("/posts", async (PostDb db) => await db.Posts.ToListAsync());
 
